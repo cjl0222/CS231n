@@ -101,7 +101,9 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            dists[i, :] = np.sqrt(np.sum(np.square(np.tile(X[i, :], (num_train, 1)) - self.X_train), axis=1))
+            # [[X[i, :]], [X[i, :]], ...] - [X_train] (num_train, D)
+            # then sum in axis=1
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -131,7 +133,11 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # matrix multiplication:
+
+        dists = np.sqrt(np.sum(np.square(X),axis=1).reshape(num_test,1)-2*np.matmul(X,np.transpose(self.X_train))+np.sum(np.square(self.X_train),axis=1))
+
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
