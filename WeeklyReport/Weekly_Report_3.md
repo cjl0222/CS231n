@@ -14,9 +14,9 @@
 
 1. **完成了 CS231n Assignment 1 第 1 部分。**实现了基于 K-Nearest Neighbor 方法的分类器，并采用向量化（Vectorization）方法对分类器的训练进行了加速，针对不同的k的取值对分类器的表现进行评估
 
-   （Codes： [knn.ipynb][https://github.com/cjl0222/CS231n/blob/master/assignment1/knn.ipynb]、[k_nearest_neighbor.py][https://github.com/cjl0222/CS231n/blob/master/assignment1/cs231n/classifiers/k_nearest_neighbor.py] ）
+   （Codes： [knn.ipynb](https://github.com/cjl0222/CS231n/blob/master/assignment1/knn.ipynb) 、 [k_nearest_neighbor.py](https://github.com/cjl0222/CS231n/blob/master/assignment1/cs231n/classifiers/k_nearest_neighbor.py) ）
 
-2. 加深了对于 NumPy 一些常用函数的认识（笔记见**[Notes][https://github.com/cjl0222/CS231n/blob/master/Notes/Notes%20of%20Numpy%20Functions.md]**），对于Python编程的熟练程度进一步加强。
+2. 加深了对于 NumPy 一些常用函数的认识（笔记见**[Notes](https://github.com/cjl0222/CS231n/blob/master/Notes/Notes%20of%20Numpy%20Functions.md)**），对于Python编程的熟练程度进一步加强。
 
 3. CS231n 课程视频看到 **Lecture 3** （about SVM, softmax and gradient descent）。SVM是较新的知识，而softmax和梯度下降法在之前已有了解。
 
