@@ -101,3 +101,29 @@ array([ 5.42052263,  6.41512678])
 [[1],[2]]的shape值是(2,1)，意思是一个二维数组，每行有1个元素。
 
 [[1,2]]的shape值是（1，2），意思是一个二维数组，每行有2个元素。
+
+
+
+### numpy.array_split()
+
+For an array of length l that should be split into n sections, it returns **l % n** sub-arrays of size **l//n + 1** and the rest of size **l//n**. 
+
+ **前** `l % n` **个组的大小是** `l // n + 1`**，剩下组的大小是** `l // n`**。** 其中 `//` 表示下取整，即 `np.floor()`。 
+
+Examples
+
+```python
+x = np.arange(8.0)
+np.array_split(x, 3)
+# [array([ 0.,  1.,  2.]), array([ 3.,  4.,  5.]), array([ 6.,  7.])]
+
+x = np.arange(7.0)
+np.array_split(x, 3)
+# [array([ 0.,  1.,  2.]), array([ 3.,  4.]), array([ 5.,  6.])]
+
+```
+
+对于例子 1，`l` 为 8，`n` 为 3，前 `8 % 3 = 2` 个组的大小为 `8 // 3 + 1 = 3`，剩下组的大小为 `8 // 3 = 2`。
+
+对于例子 2，`l` 为 7，`n` 为 3，前 `7 % 3 = 1` 个组的大小为 `7 // 3 + 1 = 3`，剩下组的大小为 `7 // 3 = 2`。
+
