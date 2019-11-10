@@ -18,7 +18,7 @@
 
 以下是推导的一些过程。
 
-![](\pics\pic_report_4.jpg)
+![](https://github.com/cjl0222/CS231n/raw/master/WeeklyReport/pics/pic_report_4.jpg)
 
 
 
