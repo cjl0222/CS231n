@@ -33,7 +33,14 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = X.shape[0]
+    num_classes = W.shape[1]
+
+    f = X.dot(W)  # (N pics, C classes, scores)
+    f_max = np.reshape(np.max(f, axis=1), (num_train, 1))  # (N pics, 1 max score),
+
+
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
