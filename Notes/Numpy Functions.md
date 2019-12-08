@@ -197,3 +197,21 @@ print(c)#[1 0 2]
 
 ```
 
+
+
+### numpy.max() vs numpy.maximum()
+
+```python
+>> np.max([-2, -1, 0, 1, 2])
+2
+
+>> np.maximum([-2, -1, 0, 1, 2], 0)
+array([0, 0, 0, 1, 2])
+
+        # 当然 np.maximum 接受的两个参数，也可以大小一致
+        # 或者更为准确地说，第二个参数只是一个单独的值时，其实是用到了维度的 broadcast 机制；
+————————————————
+版权声明：本文为CSDN博主「Inside_Zhang」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/lanchunhui/article/details/52700895
+```
+
