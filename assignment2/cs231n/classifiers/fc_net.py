@@ -87,7 +87,18 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        out1, cache1 = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        out2, fc_cache2 = affine_forward(out1, self.params['W2'], self.params['b2'])
+
+        # shifted_logits = out2 - np.max(out2, axis=1, keepdims=True)
+        # Z = np.sum(np.exp(shifted_logits), axis=1, keepdims=True)
+        # log_probs = shifted_logits - np.log(Z)
+        # probs = np.exp(log_probs)
+        #
+        # scores = probs
+
+        scores = out2
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -111,7 +122,17 @@ class TwoLayerNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dout2 = softmax_loss(out2, y)
+        loss += (0.5*self.reg*np.sum(self.params['W1']**2) + 0.5*self.reg*np.sum(self.params['W2']**2))
+        dout1, dw2, db2 = affine_backward(dout2, fc_cache2)
+        grads['W2'] = dw2 + self.reg * self.params['W2']
+        grads['b2'] = db2
+
+        fc1_cache, relu1_cache = cache1
+        dout0 = relu_backward(dout1, relu1_cache)
+        dx, dw1, db1 = affine_backward(dout0, fc1_cache)
+        grads['W1'] = dw1 + self.reg * self.params['W1']
+        grads['b1'] = db1
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
