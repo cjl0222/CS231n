@@ -203,7 +203,22 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        for i in range(self.num_layers):
+
+            # print('i=' + str(i))
+            if i==0:
+                self.params['W' + str(i + 1)] = weight_scale * np.random.randn(input_dim, hidden_dims[i])
+            elif i != self.num_layers - 1:
+                self.params['W' + str(i + 1)] = weight_scale * np.random.randn(hidden_dims[i - 1], hidden_dims[i])
+            else:
+                self.params['W' + str(i + 1)] = weight_scale * np.random.randn(hidden_dims[i - 1], num_classes)
+
+
+            if i==self.num_layers-1:
+                self.params['b' + str(i + 1)] = np.zeros(num_classes)
+            else:
+                self.params['b' + str(i + 1)] = np.zeros(hidden_dims[i])
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -266,7 +281,33 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        a = []
+        outs = []
+        fc_caches = []
+        relu_caches = []
+
+        for i in range(self.num_layers - 1):
+
+            # print('i='+str(i))
+            if i==0:
+                a_now, fc_caches_now = affine_forward(X, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
+            else:
+                a_now, fc_caches_now = affine_forward(outs[i - 1], self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
+
+            outs_now, relu_caches_now = relu_forward(a_now)
+
+            a.append(a_now)
+            fc_caches.append(fc_caches_now)
+            outs.append(outs_now)
+            relu_caches.append(relu_caches_now)
+
+        # The last layer
+        i = self.num_layers - 1
+        a_now, fc_caches_now = affine_forward(outs[i - 1], self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
+        a.append(a_now)
+        fc_caches.append(fc_caches_now)
+
+        scores = a[i]
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -293,7 +334,25 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        # compute loss:
+        loss, dout_now = softmax_loss(a[i], y)
+        for i in range(self.num_layers):
+            loss += 0.5 * self.reg * np.sum(self.params['W' + str(i + 1)] ** 2)
+
+        # compute gradients:
+
+        # last layer:
+        i = self.num_layers - 1
+        dout_now, dw_now, db_now = affine_backward(dout_now, fc_caches[i])
+        grads['W' + str(i + 1)] = dw_now + self.reg * self.params['W' + str(i + 1)]
+        grads['b' + str(i + 1)] = db_now
+
+        for i in range(self.num_layers - 2, -1, -1):
+
+            dout_now = relu_backward(dout_now, relu_caches[i])
+            dout_now, dw_now, db_now = affine_backward(dout_now, fc_caches[i])
+            grads['W' + str(i + 1)] = dw_now + self.reg * self.params['W' + str(i + 1)]
+            grads['b' + str(i + 1)] = db_now
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
