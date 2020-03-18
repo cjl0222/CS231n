@@ -216,8 +216,15 @@ class FullyConnectedNet(object):
 
             if i==self.num_layers-1:
                 self.params['b' + str(i + 1)] = np.zeros(num_classes)
+                # self.params['gamma' + str(i + 1)] = np.ones(num_classes)
+                # self.params['beta' + str(i + 1)] = np.zeros(num_classes)
             else:
                 self.params['b' + str(i + 1)] = np.zeros(hidden_dims[i])
+                if self.normalization=='batchnorm':
+                    self.params['gamma' + str(i + 1)] = np.ones(hidden_dims[i])
+                    self.params['beta' + str(i + 1)] = np.zeros(hidden_dims[i])
+
+
 
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -284,6 +291,7 @@ class FullyConnectedNet(object):
         a = []
         outs = []
         fc_caches = []
+        bn_caches = []
         relu_caches = []
 
         for i in range(self.num_layers - 1):
@@ -293,13 +301,18 @@ class FullyConnectedNet(object):
                 a_now, fc_caches_now = affine_forward(X, self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
             else:
                 a_now, fc_caches_now = affine_forward(outs[i - 1], self.params['W' + str(i + 1)], self.params['b' + str(i + 1)])
+            fc_caches.append(fc_caches_now)
+
+            if self.normalization == 'batchnorm':
+                a_now, bn_cache_now = batchnorm_forward(a_now, self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.bn_params[i])
+                bn_caches.append(bn_cache_now)
 
             outs_now, relu_caches_now = relu_forward(a_now)
 
             a.append(a_now)
-            fc_caches.append(fc_caches_now)
             outs.append(outs_now)
             relu_caches.append(relu_caches_now)
+
 
         # The last layer
         i = self.num_layers - 1
@@ -350,6 +363,12 @@ class FullyConnectedNet(object):
         for i in range(self.num_layers - 2, -1, -1):
 
             dout_now = relu_backward(dout_now, relu_caches[i])
+
+            if self.normalization == 'batchnorm':
+                dout_now, dgamma, dbeta = batchnorm_backward_alt(dout_now, bn_caches[i])
+                grads['gamma' + str(i + 1)] = dgamma
+                grads['beta' + str(i + 1)] = dbeta
+
             dout_now, dw_now, db_now = affine_backward(dout_now, fc_caches[i])
             grads['W' + str(i + 1)] = dw_now + self.reg * self.params['W' + str(i + 1)]
             grads['b' + str(i + 1)] = db_now
