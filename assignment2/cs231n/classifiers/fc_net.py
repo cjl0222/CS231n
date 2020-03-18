@@ -293,6 +293,7 @@ class FullyConnectedNet(object):
         fc_caches = []
         bn_caches = []
         relu_caches = []
+        dropout_caches = []
 
         for i in range(self.num_layers - 1):
 
@@ -307,11 +308,18 @@ class FullyConnectedNet(object):
                 a_now, bn_cache_now = batchnorm_forward(a_now, self.params['gamma' + str(i + 1)], self.params['beta' + str(i + 1)], self.bn_params[i])
                 bn_caches.append(bn_cache_now)
 
-            outs_now, relu_caches_now = relu_forward(a_now)
+            a_now, relu_caches_now = relu_forward(a_now)
+
+            if self.use_dropout:
+                outs_now, dropout_cache_now = dropout_forward(a_now, self.dropout_param)
+                dropout_caches.append(dropout_cache_now)
+            else:
+                outs_now = a_now
 
             a.append(a_now)
             outs.append(outs_now)
             relu_caches.append(relu_caches_now)
+
 
 
         # The last layer
@@ -361,6 +369,9 @@ class FullyConnectedNet(object):
         grads['b' + str(i + 1)] = db_now
 
         for i in range(self.num_layers - 2, -1, -1):
+
+            if self.use_dropout:
+                dout_now = dropout_backward(dout_now, dropout_caches[i])
 
             dout_now = relu_backward(dout_now, relu_caches[i])
 
