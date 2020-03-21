@@ -605,7 +605,32 @@ def conv_forward_naive(x, w, b, conv_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (N, C, H, W) = x.shape
+    (F, C, HH, WW) = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+
+    x_pad = np.pad(x, ((0,0),(0,0),(pad,pad),(pad,pad)), 'constant', constant_values=(0, 0))
+
+    H_out = int(1 + (H + 2 * pad - HH) / stride)
+    W_out = int(1 + (W + 2 * pad - WW) / stride)
+
+
+    out = np.zeros((N, F, H_out, W_out))
+
+
+
+    for i in range(H_out):
+        for j in range(W_out):
+            for ff in range(F):
+                for nn in range(N):
+                    # print((cc, i, j, ff, nn))
+                    # print(x_pad[:, cc, stride * i:stride * i + HH, stride * j:stride * j + WW].shape)
+                    # print(w[:, cc, :, :].shape)
+                    # print(b[ff].shape)
+                    out[nn, ff, i, j] = np.sum(x_pad[nn, :, stride*i:stride*i+HH,
+                                          stride*j:stride*j+WW] * w[ff, :, :, :]) + b[ff]
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -634,7 +659,73 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (x, w, b, conv_param) = cache
+
+    (N, C, H, W) = x.shape
+    (F, C, HH, WW) = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+
+    x_pad = np.pad(x, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
+
+    w_flip = np.flip(w, (2,3))
+
+    H_out = int(1 + (H + 2 * pad - HH) / stride)
+    W_out = int(1 + (W + 2 * pad - WW) / stride)
+
+    # out = np.zeros((N, F, H_out, W_out))
+
+    dx = np.zeros_like(x)
+    dw = np.zeros_like(w)
+    db = np.zeros_like(b)
+    dx_pad = np.zeros_like(x_pad)
+
+    H_dilated = (H_out-1)*stride+1
+    W_dilated = (W_out-1)*stride+1
+    dout_dilated = np.zeros((N, F, H_dilated, W_dilated))
+
+    for i in range(H_out):
+        for j in range(W_out):
+            # print((i, j))
+            dout_dilated[:, :, i * stride, j * stride] = dout[:, :, i, j]
+
+    dout_pad_dilated = np.pad(dout_dilated, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
+
+    for i in range(HH):
+        for j in range(WW):
+            for ff in range(F):
+                for cc in range(C):
+                    # print((ff, cc, i, j))
+                    dw[ff, cc, i, j] = np.sum(x_pad[:, cc, i:i + H_dilated, j:j + W_dilated] * dout_dilated[:, ff, :, :])
+
+    # for i in range(HH):
+    #     for j in range(WW):
+    #         for ff in range(F):
+    #             for cc in range(C):
+    #                 dw[ff, cc, i, j] = np.sum(x_pad[:, cc, stride * i:stride * i + H_out,
+    #                                            stride * j:stride * j + W_out] * dout[:, ff, :, :][:, np.newaxis, :, :])
+
+    # dout_pad_dilated = np.zeros((N, F, H + 2 * pad, W + 2 * pad))
+    #
+    # for i in range(H_out):
+    #     for j in range(W_out):
+    #         # print((i,j))
+    #         dout_pad_dilated[:, :, i * stride + pad, j * stride + pad] = dout[:, :, i, j]
+
+    # dout_pad = np.pad(dout, ((0, 0), (0, 0), (pad, pad), (pad, pad)), 'constant', constant_values=(0, 0))
+
+
+
+    for i in range(H):
+        for j in range(W):
+            for ff in range(F):
+                for nn in range(N):
+                    for cc in range(C):
+                        # print((nn, ff, i, j))
+                        dx[nn, cc, i, j] += np.sum(dout_pad_dilated[nn, ff, i:i + HH, j:j + WW] * w_flip[ff, cc, :, :])
+
+    # dx = dx_pad[:, :, pad:-pad, pad:-pad]
+    db = np.sum(dout, (0,2,3))
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -668,7 +759,20 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    (N, C, H, W) = x.shape
+
+    H_out= 1 + (H - pool_height) // stride
+    W_out= 1 + (W - pool_width) // stride
+    out = np.zeros((N, C, H_out, W_out))
+
+    for i in range(H_out):
+        for j in range(W_out):
+            for nn in range(N):
+                for cc in range(C):
+                    x_sample = x[nn, cc, i*stride : i*stride+pool_height, j*stride : j*stride+pool_width]
+                    out[nn, cc, i, j] = np.max(x_sample)
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -695,7 +799,23 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (x, pool_param) = cache
+
+    pool_height, pool_width, stride = pool_param['pool_height'], pool_param['pool_width'], pool_param['stride']
+    (N, C, H, W) = x.shape
+
+    H_out = 1 + (H - pool_height) // stride
+    W_out = 1 + (W - pool_width) // stride
+    dx = np.zeros((N, C, H, W))
+
+    for i in range(H_out):
+        for j in range(W_out):
+            for nn in range(N):
+                for cc in range(C):
+                    x_sample = x[nn, cc, i * stride: i * stride + pool_height, j * stride: j * stride + pool_width]
+                    dx_sample = np.zeros_like(x_sample)
+                    dx_sample[x_sample==np.max(x_sample)] = dout[nn, cc, i, j]
+                    dx[nn, cc, i * stride: i * stride + pool_height, j * stride: j * stride + pool_width] = dx_sample
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -737,7 +857,10 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (N, C, H, W) = x.shape
+    x_flat = x.transpose(0, 2, 3, 1).reshape(N*H*W, C)  # pay attention to the order of dims!!
+    out, cache = batchnorm_forward(x_flat, gamma, beta, bn_param)
+    out = out.reshape(N, H, W, C).transpose(0, 3, 1, 2) # pay attention to the order of dims!!
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -771,7 +894,10 @@ def spatial_batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (N, C, H, W) = dout.shape
+    dout_flat = dout.transpose(0, 2, 3, 1).reshape(N * H * W, C)  # pay attention to the order of dims!!
+    dx, dgamma, dbeta = batchnorm_backward_alt(dout_flat, cache)
+    dx = dx.reshape(N, H, W, C).transpose(0, 3, 1, 2)  # pay attention to the order of dims!!
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
