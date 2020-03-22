@@ -937,7 +937,33 @@ def spatial_groupnorm_forward(x, gamma, beta, G, gn_param):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (N, C, H, W) = x.shape
+    x_flat = x.transpose(0, 2, 3, 1).reshape(N * H * W, C)  # pay attention to the order of dims!!
+    gamma = gamma.reshape(C)
+    beta = beta.reshape(C)
+
+    # cut into pieces
+    mu = np.zeros((N * H * W, C))
+    for i in range(G):
+        mu[:, i*(C // G) : (i+1)*(C // G)] = np.mean(x_flat[:, i*(C // G) : (i+1)*(C // G)], axis=1, keepdims=True) * np.ones((N * H * W, C//G))  # keepdims in order to broadcast
+
+    x_corrected = x_flat - mu
+    x_squared = x_corrected ** 2
+
+    # cut into pieces
+    var = np.zeros((N * H * W, C))
+    for i in range(G):
+        var[:, i * (C // G): (i + 1) * (C // G)] = np.mean(x_squared[:, i * (C // G): (i + 1) * (C // G)], axis=1, keepdims=True) * np.ones((N * H * W, C//G))  # keepdims in order to broadcast
+
+    # print(var.shape)
+    std = np.sqrt(var + eps)
+    istd = 1 / std
+    xhat = x_corrected * istd
+    y = gamma * xhat + beta
+    # print((gamma).shape)
+    out = y.reshape(N, H, W, C).transpose(0, 3, 1, 2)  # pay attention to the order of dims!!
+
+    cache = (mu, x_corrected, x_squared, var, std, istd, xhat, x, y, gamma, beta, eps, G)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -967,7 +993,31 @@ def spatial_groupnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    (mu, x_corrected, x_squared, var, std, istd, xhat, x, y, gamma, beta, eps, G) = cache
+    (N, C, H, W) = x.shape
+
+
+    dout_flat = dout.transpose(0, 2, 3, 1).reshape(N * H * W, C)  # pay attention to the order of dims!!
+
+    dbeta = np.sum(dout_flat, axis=0)
+    dgamma = np.sum(dout_flat * xhat, axis=0)
+    dxhat = dout_flat * gamma
+    # distd = np.sum(dxhat * x_corrected, axis=1, keepdims=True)
+    distd = dxhat * x_corrected
+    dstd = distd * (-1 / (std ** 2))
+    dvar = dstd * (1 / 2 * (var + eps) ** (-1 / 2))
+
+    dx_squared = dvar / (C // G)  # interesting!!
+
+    dx_corrected = dx_squared * 2 * x_corrected + dxhat * istd
+    # dmu = np.sum(dx_corrected * -1, axis=1, keepdims=True)
+    dmu = dx_corrected * -1
+    dx = dmu / (C // G) + dx_corrected
+    print(dout_flat.shape, dbeta.shape, dgamma.shape, dxhat.shape, distd.shape, dstd.shape, dvar.shape, dx_squared.shape, dx_corrected.shape, dmu.shape, dx.shape)
+    dx = dx.reshape(N, H, W, C).transpose(0, 3, 1, 2)  # pay attention to the order of dims!!
+    print(dx.shape)
+    dbeta = dbeta.reshape(1, C, 1, 1)
+    dgamma = dgamma.reshape(1, C, 1, 1)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
