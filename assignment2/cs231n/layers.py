@@ -1007,15 +1007,30 @@ def spatial_groupnorm_backward(dout, cache):
     dstd = distd * (-1 / (std ** 2))
     dvar = dstd * (1 / 2 * (var + eps) ** (-1 / 2))
 
-    dx_squared = dvar / (C // G)  # interesting!!
+    # cut into pieces
+    dx_squared = np.zeros((N * H * W, C))
+    for i in range(G):
+        dx_squared[:, i * (C // G): (i + 1) * (C // G)] = np.sum(dvar[:, i * (C // G): (i + 1) * (C // G)] / (C // G), axis=1, keepdims=True) * np.ones(
+            (N * H * W, C // G))  # keepdims in order to broadcast
+
+    # dx_squared = np.sum(dvar / (C // G), axis=1, keepdims=True)  # interesting!!
 
     dx_corrected = dx_squared * 2 * x_corrected + dxhat * istd
     # dmu = np.sum(dx_corrected * -1, axis=1, keepdims=True)
     dmu = dx_corrected * -1
-    dx = dmu / (C // G) + dx_corrected
-    print(dout_flat.shape, dbeta.shape, dgamma.shape, dxhat.shape, distd.shape, dstd.shape, dvar.shape, dx_squared.shape, dx_corrected.shape, dmu.shape, dx.shape)
+
+    # cut into pieces
+    dx = np.zeros((N * H * W, C))
+    for i in range(G):
+        dx[:, i * (C // G): (i + 1) * (C // G)] = np.sum(dmu[:, i * (C // G): (i + 1) * (C // G)] / (C // G),
+                                                                 axis=1, keepdims=True) * np.ones(
+            (N * H * W, C // G))  # keepdims in order to broadcast
+
+    dx = dx + dx_corrected
+
+    # print(dout_flat.shape, dbeta.shape, dgamma.shape, dxhat.shape, distd.shape, dstd.shape, dvar.shape, dx_squared.shape, dx_corrected.shape, dmu.shape, dx.shape)
     dx = dx.reshape(N, H, W, C).transpose(0, 3, 1, 2)  # pay attention to the order of dims!!
-    print(dx.shape)
+    # print(dx.shape)
     dbeta = dbeta.reshape(1, C, 1, 1)
     dgamma = dgamma.reshape(1, C, 1, 1)
 
